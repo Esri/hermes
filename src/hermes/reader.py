@@ -5,7 +5,7 @@ import os
 import arcpy
 import tempfile
 from xml.etree.ElementTree import ElementTree
-from common import HermesErrorHandler
+from common import HermesErrorHandler, trace
 ########################################################################
 class MetadataReader(object):
     """
@@ -34,126 +34,318 @@ class MetadataReader(object):
     #----------------------------------------------------------------------
     def _setup(self):
         """creates a blank metadata file"""
-        fd, filepath = tempfile.mkstemp(".xml",
-                                        dir=self.save_location,
-                                        text=True)
-        self._temp_xml_file = filepath
-        with os.fdopen(fd, "w") as f:
-            f.write("<metadata />")
-            f.close()
-        del fd
-        arcpy.MetadataImporter_conversion(self._dataset, filepath)
-        self._tree = ElementTree()
-        self._tree.parse(self._temp_xml_file)
+        try:
+            fd, filepath = tempfile.mkstemp(".xml",
+                                            dir=self.save_location,
+                                            text=True)
+            self._temp_xml_file = filepath
+            with os.fdopen(fd, "w") as f:
+                f.write("<metadata />")
+                f.close()
+            del fd
+            arcpy.MetadataImporter_conversion(self._dataset, filepath)
+            self._tree = ElementTree()
+            self._tree.parse(self._temp_xml_file)
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "_setup",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
     #----------------------------------------------------------------------
     @property
     def xmlfile(self):
         """gets the temporary xml file path"""
-        if self._temp_xml_file is None:
-            self._setup()
-        return self._temp_xml_file
+        try:
+            if self._temp_xml_file is None:
+                self._setup()
+            return self._temp_xml_file
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "xmlfile",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     @property
     def save_location(self):
         """returns the location where the xml file is saved"""
-        if self._temp_workspace is None:
-            self._temp_workspace = tempfile.gettempdir()
-        return self._temp_workspace
+        try:
+            if self._temp_workspace is None:
+                self._temp_workspace = tempfile.gettempdir()
+            return self._temp_workspace
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "save_location",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     @property
     def tree(self):
         """returns the parsed ElementTree()"""
-        if self._tree is None:
-            self._setup()
-        return self._tree
+        try:
+            if self._tree is None:
+                self._setup()
+            return self._tree
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "tree",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     def _getElementText(self, elementPath):
         """Returns the specified element's text if it exists or an empty
         string if not."""
-        element = self.tree.find(elementPath)
-        return element.text if element != None else ""
+        try:
+            element = self.tree.find(elementPath)
+            return element.text if element != None else ""
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "_getElementText",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     def _getFirstElementText(self, elementPaths):
         """Returns the first found element matching one of the specified
         element paths"""
-        result = ""
-        for elementPath in elementPaths:
-            element = self.tree.find(elementPath)
-            if element != None:
-                result = element.text
-                break
-        return result
+        try:
+            result = ""
+            for elementPath in elementPaths:
+                element = self.tree.find(elementPath)
+                if element != None:
+                    result = element.text
+                    break
+            return result
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "_getFirstElementText",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     def _listElementsText(self, elementPath):
         """Returns a comma+space-separated list of the text values of all
         instances of the specified element, or an empty string if none are
         found."""
-        elements = self.tree.findall(elementPath)
-        if elements:
-            return ", ".join([element.text for element in elements])
-        else:
-            return ""
+        try:
+            elements = self.tree.findall(elementPath)
+            if elements:
+                return ", ".join([element.text for element in elements])
+            else:
+                return ""
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "_listElementsText",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     @property
     def originator(self):
         """gets the originator text fromt he metadata"""
-        if self._dataset.lower().endswith(".shp"):
-            return self._getElementText("dataIdInfo/idCredit")
-        else:
-            return self._getElementText("idinfo/citation/citeinfo/origin")
+        try:
+            if self._dataset.lower().endswith(".shp"):
+                return self._getElementText("dataIdInfo/idCredit")
+            else:
+                return self._getElementText("idinfo/citation/citeinfo/origin")
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "originator",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     @property
     def POC(self):
         """returns the POC from the metadata"""
-        return self._getFirstElementText(("idinfo/ptcontac/cntinfo/cntperp/cntorg", # Point of contact organization (person primary contact)
-                                        "idinfo/ptcontac/cntinfo/cntorgp/cntorg")) # Point of contact organization (organization primary contact)
+        try:
+            return self._getFirstElementText(("idinfo/ptcontac/cntinfo/cntperp/cntorg", # Point of contact organization (person primary contact)
+                                              "idinfo/ptcontac/cntinfo/cntorgp/cntorg")) # Point of contact organization (organization primary contact)
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "POC",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
     #----------------------------------------------------------------------
     @property
     def abstract(self):
         """Gets the abstract for the metadata"""
-        if self._dataset.lower().endswith(".shp"):
-            return self._getElementText("dataIdInfo/idAbs")
-        else:
-            return self._getElementText("idinfo/descript/abstract")
+        try:
+            if self._dataset.lower().endswith(".shp"):
+                return self._getElementText("dataIdInfo/idAbs")
+            else:
+                return self._getElementText("idinfo/descript/abstract")
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "abstract",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     @property
     def purpose(self):
         """gets the purpose text from the metadata"""
-        if self._dataset.lower().endswith(".shp"):
-            return self._getElementText("dataIdInfo/idPurp")
-        else:
-            return self._getElementText("idinfo/descript/purpose")
+        try:
+            if self._dataset.lower().endswith(".shp"):
+                return self._getElementText("dataIdInfo/idPurp")
+            else:
+                return self._getElementText("idinfo/descript/purpose")
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "purpose",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     @property
     def searchKeys(self):
         """gets the searchKeys values from the metadata"""
-        return self._listElementsText("dataIdInfo/searchKeys/keyword")
+        try:
+            return self._listElementsText("dataIdInfo/searchKeys/keyword")
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "searchKeys",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
     #----------------------------------------------------------------------
     @property
     def themeKeys(self):
         """gets the themekey values from the metadata"""
-        if self._dataset.lower().endswith(".shp"):
-            return self._listElementsText("dataIdInfo/themeKeys/keyword")
-        else:
-            return self._listElementsText("idinfo/keywords/theme/themekey")
+        try:
+            if self._dataset.lower().endswith(".shp"):
+                return self._listElementsText("dataIdInfo/themeKeys/keyword")
+            else:
+                return self._listElementsText("idinfo/keywords/theme/themekey")
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                    {
+                        "function": "themeKeys",
+                        "line": line,
+                        "filename": filename,
+                        "synerror": synerror,
+                        "arc" : str(arcpy.GetMessages(2))
+                    }
+                )
     #----------------------------------------------------------------------
     def getElementText(self, path):
         """returns the element text"""
-        return self._getElementText(elementPath=path)
+        try:
+            return self._getElementText(elementPath=path)
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "getElementText",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
     #----------------------------------------------------------------------
     def getListElements(self, path):
         """returns a list of elements"""
-        return self._listElementsText(elementPath=path)
+        try:
+            return self._listElementsText(elementPath=path)
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "getListElements",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
     #----------------------------------------------------------------------
     def getFirstElementText(self, path):
         """returns the first element from a tuple of paths"""
-        if isinstance(path, str):
-            path = (path)
-        elif isinstance(path, (tuple, list)):
-            pass
-        else:
-            raise Exception("Invalid input %s" % type(path))
-        return self._getFirstElementText(elementPaths=path)
+        try:
+            if isinstance(path, str):
+                path = (path)
+            elif isinstance(path, (tuple, list)):
+                pass
+            else:
+                raise HermesErrorHandler("Invalid input %s" % type(path))
+            return self._getFirstElementText(elementPaths=path)
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "getFirstElementText",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
     #----------------------------------------------------------------------
     @property
     def datasetProperties(self):
@@ -162,29 +354,43 @@ class MetadataReader(object):
         information about the workspace.
         The return object is a dictionary {}
         """
-        validationWorkspace = os.path.dirname(self._dataset)
-        desc = arcpy.Describe(self._dataset)
-        descWrksp = arcpy.Describe(desc.path)
-        database, owner, tableName = [i.strip() if i.strip() != "(null)" else "" for i in arcpy.ParseTableName(desc.name, validationWorkspace).split(",")]
-        datasetType = desc.datasetType if hasattr(desc, "datasetType") else ""
-        workspaceFactoryProgID = descWrksp.workspaceFactoryProgID if hasattr(descWrksp, "workspaceFactoryProgID") else ""
-        workspaceType = descWrksp.workspaceType if hasattr(descWrksp, "workspaceType") else ""
-        connectionString = descWrksp.connectionString if hasattr(descWrksp, "connectionString") else ""
-        alias = desc.aliasName if hasattr(desc, "aliasName") else ""
-        dataType = descWrksp.dataType if hasattr(descWrksp, "dataType") else ""
-        return {
-            "owner" : owner,
-            "tableName" : tableName,
-            "alias" : alias,
-            "datasetType" : datasetType,
-            "workspace" : {
-                "type" : descWrksp.dataType,
-                "path" : desc.path,
-                "connectionString" : connectionString,
-                "workspaceType" : workspaceType,
-                "workspaceFactoryProgID" : workspaceFactoryProgID
+        try:
+            validationWorkspace = os.path.dirname(self._dataset)
+            desc = arcpy.Describe(self._dataset)
+            descWrksp = arcpy.Describe(desc.path)
+            database, owner, tableName = [i.strip() if i.strip() != "(null)" else "" \
+                                          for i in arcpy.ParseTableName(desc.name,
+                                                                        validationWorkspace).split(",")]
+            datasetType = desc.datasetType if hasattr(desc, "datasetType") else ""
+            workspaceFactoryProgID = descWrksp.workspaceFactoryProgID if hasattr(descWrksp, "workspaceFactoryProgID") else ""
+            workspaceType = descWrksp.workspaceType if hasattr(descWrksp, "workspaceType") else ""
+            connectionString = descWrksp.connectionString if hasattr(descWrksp, "connectionString") else ""
+            alias = desc.aliasName if hasattr(desc, "aliasName") else ""
+            dataType = descWrksp.dataType if hasattr(descWrksp, "dataType") else ""
+            return {
+                "owner" : owner,
+                "tableName" : tableName,
+                "alias" : alias,
+                "datasetType" : datasetType,
+                "workspace" : {
+                    "type" : descWrksp.dataType,
+                    "path" : desc.path,
+                    "connectionString" : connectionString,
+                    "workspaceType" : workspaceType,
+                    "workspaceFactoryProgID" : workspaceFactoryProgID
+                }
             }
-        }
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "datasetProperties",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
 if __name__ == "__main__":
     mdr = MetadataReader(dataset=r"c:\temp\scratch.gdb\state")
     print mdr.datasetProperties

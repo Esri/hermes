@@ -1,4 +1,25 @@
 import json
+import traceback
+import sys
+import os
+def trace():
+    """
+        trace finds the line, the filename
+        and error message and returns it
+        to the user
+    """
+
+    tb = sys.exc_info()[2]
+    info = sys.exc_info()
+    extracttb = traceback.extract_tb(info[2])
+    fileName = os.path.basename(extracttb[0][0])
+    tbinfo = traceback.format_tb(tb)[0]
+    # script name + line number
+    line = tbinfo.split(", ")[1]
+    # Get Python syntax error
+    #
+    synerror = traceback.format_exc().splitlines()[-1]
+    return line, fileName, synerror
 #--------------------------------------------------------------------------
 class HermesErrorHandler(Exception):
     """Error handler for hermes package"""

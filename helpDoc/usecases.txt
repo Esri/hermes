@@ -1,0 +1,31 @@
+Test Cases:
+    1 - Get common information
+        (reader)
+        - shapefile
+        - fgdb fc
+        - sde fc
+    2 - Get specific information
+        (reader)
+        - shapefile
+        - fgdb fc
+        - sde fc
+    3 - Update Attribute
+        (writer)
+        - shapefile
+        - fgdb fc
+        - sde fc
+    4. Create Attribute
+        (writer)
+        - shapefile
+        - fgdb fc
+        - sde fc
+    5. Create node
+        (writer)
+        - shapefile
+        - fgdb fc
+        - sde fc
+    6. Validate metadata/Save to dataset
+        (writer)
+        - shapefile
+        - fgdb fc
+        - sde fc
