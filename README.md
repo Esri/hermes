@@ -38,21 +38,28 @@ The dictionary results explained:
 
 All attributes begin with a '@' and will be inside the element tag.
 All text values will be stated as: #text : <value>
-        Example:
-                '''HTML<someelement myValue=1>i heart paperwork</someelement>'''
-                Results in:
-                {'someelement': { '@myValue' : 1,
-                                  '#text' : 'i heart paperwork'
-                                }
-                }
-        Example 2:
-                '''html<someelement myValue=1>
-                  <subelement tags="fish">my value</subelement>
-                </someelement>'''
-        Results:
-                {'someelement': { '@myValue' : 1,
-                                  "subelement" : {'@tags' : "fish",
-                                                  '#text' : 'my value'
-                                                  }
-                                }
-                }
+Example:
+    ```xml<someelement myValue=1>i heart paperwork</someelement>```
+
+    Results in:
+
+    {'someelement': { '@myValue' : 1,
+                      '#text' : 'i heart paperwork'
+                    }
+    }
+
+Example 2:
+        ```xml
+        <someelement myValue=1>
+          <subelement tags="fish">my value</subelement>
+        </someelement>
+        ```
+
+Results:
+
+        {'someelement': { '@myValue' : 1,
+                          "subelement" : {'@tags' : "fish",
+                                          '#text' : 'my value'
+                                          }
+                        }
+        }
