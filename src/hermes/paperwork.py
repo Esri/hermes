@@ -255,7 +255,7 @@ class Paperwork(object):
         try:
             if d is None:
                 d = self.convert()
-            elif isinstance(d, dict):
+            if isinstance(d, dict):
                 res = self._dictionary_to_metadata(d)
                 writer = None
                 with open(self._temp_xml_file, 'wb') as writer:
@@ -269,8 +269,10 @@ class Paperwork(object):
                 self._temp_xml_file = None
                 self._temp_workspace = None
                 self._xmlText = None
+                return True
             else:
                 raise Exception("Input must be of type dictionary")
+            return False
         except:
             line, filename, synerror = trace()
             raise HermesErrorHandler(
@@ -282,6 +284,146 @@ class Paperwork(object):
                     "arc" : synerror
                 }
             )
+    #----------------------------------------------------------------------
+    def exportToXML(self, outFolder=None, outName=None):
+        """
+        Exports a metadata file (.xml) to a save location and a given name.
+        To get the save changes, call the save() before running the
+        function.
+
+        Example:
+        >>> fc = r"c:\temp\scratch.gdb\states"
+        >>> pw = Paperwork(dataset=fc)
+        >>> val =  pw.convert()
+        >>> val['metadata']['dataIdInfo']['searchKeys'] = {}
+        >>> val['metadata']['dataIdInfo']['searchKeys']['keywords'] = ['states', 'USA']
+        >>> pw.save(d=val)
+        >>> print pw.exportToXML(r"c:\temp\mymetadata", "system_shell.xml")
+
+        Inputs:
+          outFolder - optional - is the value provided is not given, then
+           systems temp folder will be used.
+          outName - optional - is the name of the xml file.  This can be
+           provided, or created by the system.  The file create will be
+           randomly generated.
+        Output:
+           path to xml file
+        """
+        try:
+            if outFolder is None:
+                outFolder = tempfile.gettempdir()
+            elif not outFolder is None:
+                if os.path.isdir(outFolder) == False:
+                    os.makedirs(outFolder)
+            else:
+                outFolder = tempfile.gettempdir()
+            if not outName is None:
+                if outName.lower().endswith('.xml'):
+                    fullPath = os.path.join(outFolder, outName)
+                else:
+                    fullPath = os.path.join(outFolder, outName + ".xml")
+            else:
+                from uuid import uuid4
+                fullPath = os.path.join(outFolder, uuid4().get_hex() + ".xml")
+            d = self.convert()
+            res = self._dictionary_to_metadata(d)
+            writer = None
+            with open(fullPath, 'wb') as writer:
+                writer.write(res)
+                writer.flush()
+                writer.close()
+            del writer
+            return fullPath
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "exportToXML",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : synerror
+                }
+            )
+    #----------------------------------------------------------------------
+    def importXMLFile(self, xmlFile):
+        """
+        imports an xml metadata file to the target dataset.
+        Input:
+           xmlFile - the xml file to import to the dataset.
+        Output:
+           outputs the dictionary of the newly imported file. It returns
+           None if the xml file is not valid or does not exist.
+        """
+        if os.path.isfile(xmlFile) and \
+           xmlFile.lower().endswith(".xml"):
+            arcpy.MetadataImporter_conversion(source=xmlFile,
+                                              target=self.dataset)
+            self._setup()
+            return self.convert()
+        return None
+    #----------------------------------------------------------------------
+    def setSyncMethod(self, method="ALWAYS"):
+        """
+        Automatically updates an ArcGIS item's metadata with the current
+        properties of the item.
+        For example, if the metadata describes the item as having one
+        projection but the item's projection has changed since the last
+        automatic update, the old projection information in the metadata
+        will be replaced with the new projection information.
+
+        By default, metadata is automatically updated when anyone who has
+        write access to the ArcGIS item views its metadata. Metadata can
+        also be synchronized by running this tool. The option to turn off
+        synchronization when you view metadata doesn't affect how this tool
+        operates.
+
+        Inputs:
+           method - The type of synchronization that will take place.
+            ALWAYS -Properties of the source item are always added to or
+             updated in its metadata. Metadata will be created if it
+             doesn't already exist. This is the deault.
+            ACCESSED -Properties of the source item are added to or updated
+             in its metadata when it is accessed. Metadata will be created
+             if it doesn't already exist.
+            CREATED -Metadata will be created and properties of the source
+             item will be added to it if the item doesn't already have
+             metadata.
+            NOT_CREATED -Properties of the source item are added to or
+             updated in existing metadata.
+            OVERWRITE -The same as "ALWAYS" except all information that can
+             be recorded automatically in the metadata will be recorded.
+             Any properties typed in by a person will be replaced with the
+             item's actual properties.
+            SELECTIVE -The same as "OVERWRITE" except the title and the
+             content type will not be overwritten with default values for
+             the item. Used when metadata is upgraded to the ArcGIS 10.x
+             metadata format.
+           Ouput:
+             dataset path
+        """
+        try:
+            methods = ["ALWAYS", "CREATED", "NOT_CREATED",
+                       "OVERWRITE", "SELECTIVE", "ACCESSED"]
+
+            if method.upper() in methods:
+                arcpy.SynchronizeMetadata_conversion(source=self._dataset,
+                                                     synctype=method)
+                return self.dataset
+            else:
+                raise Exception("Invalid method type: %s" % method)
+        except:
+            line, filename, synerror = trace()
+            raise HermesErrorHandler(
+                {
+                    "function": "setSyncMethod",
+                    "line": line,
+                    "filename": filename,
+                    "synerror": synerror,
+                    "arc" : str(arcpy.GetMessages(2))
+                }
+            )
+
     #----------------------------------------------------------------------
     @property
     def datasetProperties(self):
