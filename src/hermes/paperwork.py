@@ -7,7 +7,7 @@ to parse the XML in XML format.
 
 Requires : Python 2.7.x, ArcGIS 10.3.1
 """
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 import os
 import arcpy
 import json

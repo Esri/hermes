@@ -1,3 +1,7 @@
+"""
+contains some common functions
+"""
+__version__ = "1.1.0"
 import json
 import traceback
 import sys
