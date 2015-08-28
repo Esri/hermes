@@ -5,12 +5,14 @@ class.  The data will be returned as a dictionary object for easy of
 use.  This means users can modify values and push them back into the
 metadata by referencing the key names.
 
-![futureramahermes](http://upload.wikimedia.org/wikipedia/en/c/cb/FuturamaHermesConrad.png "Source: wikimedia.org")
-
 # Why use hermes?
 Metadata is the way users describe their data.  XML is hard, but this tool
 converts the XML to a Python dictionary.  This means metadata is easy to
 modify, change and add.
+
+# What inspired hermes? 
+The name was inspired by Hermes Conrad from Futurama and his love of filing paperwork.
+It also was developed to help people deal with metadata in the Python environment.
 
 #  Requirements
  - ArcGIS Desktop 10.3.x+
