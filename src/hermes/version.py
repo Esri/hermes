@@ -10,6 +10,4 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-from .version import *
-import common
-from .paperwork import Paperwork
+__version__ = "1.1.0"
