@@ -19,14 +19,16 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = "1.1.0"
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 import arcpy
 import json
 import tempfile
 import xml.etree.cElementTree as ET
-from common import HermesErrorHandler, trace
+from .common import *
 from collections import defaultdict
+__version__ = "1.1.0"
 ########################################################################
 class Paperwork(object):
     """
@@ -270,7 +272,7 @@ class Paperwork(object):
             if isinstance(d, dict):
                 res = self._dictionary_to_metadata(d)
                 writer = None
-                with open(self._temp_xml_file, 'wb') as writer:
+                with open(self.xmlfile, 'wb') as writer:
                     writer.write(res)
                     writer.flush()
                     writer.close()

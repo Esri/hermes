@@ -10,11 +10,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 """
-__version__ = "1.1.0"
-import json
+
+from __future__ import absolute_import
+from __future__ import print_function
 import traceback
 import sys
 import os
+__version__ = "1.1.0"
+
 def trace():
     """
         trace finds the line, the filename
