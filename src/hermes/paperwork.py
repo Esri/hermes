@@ -5,7 +5,8 @@ file metadata back and forth between dictionaries and xml.  The results is
 an easy to use tool where users can script metadata changes without having
 to parse the XML in XML format.
 
-Requires : Python 2.7.x, ArcGIS 10.3.1
+Requires : Python 2.7.x, Python 3.4
+           ArcGIS 10.3.1/ArcGIS 10.4
 
 
 Copyright 2015 Esri
