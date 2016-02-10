@@ -1,0 +1,416 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>hermes package &mdash; src  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="src  documentation" href="index.html" />
+    <link rel="prev" title="Welcome to hermes’s documentation!" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="hermes-package">
+<h1>hermes package<a class="headerlink" href="#hermes-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-hermes.common">
+<span id="hermes-common-module"></span><h2>hermes.common module<a class="headerlink" href="#module-hermes.common" title="Permalink to this headline">¶</a></h2>
+<p>Copyright 2015 Esri
+Licensed under the Apache License, Version 2.0 (the &#8216;License&#8217;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<blockquote>
+<div><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></div></blockquote>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &#8216;AS IS&#8217; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+<dl class="exception">
+<dt id="hermes.common.HermesErrorHandler">
+<em class="property">exception </em><code class="descclassname">hermes.common.</code><code class="descname">HermesErrorHandler</code><a class="reference internal" href="_modules/hermes/common.html#HermesErrorHandler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.common.HermesErrorHandler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></code></p>
+<p>Error handler for hermes package</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hermes.common.safe_str">
+<code class="descclassname">hermes.common.</code><code class="descname">safe_str</code><span class="sig-paren">(</span><em>obj</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/common.html#safe_str"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.common.safe_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the byte string representation of obj</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hermes.common.safe_unicode">
+<code class="descclassname">hermes.common.</code><code class="descname">safe_unicode</code><span class="sig-paren">(</span><em>obj</em>, <em>*args</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/common.html#safe_unicode"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.common.safe_unicode" title="Permalink to this definition">¶</a></dt>
+<dd><p>return the unicode representation of obj</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="hermes.common.trace">
+<code class="descclassname">hermes.common.</code><code class="descname">trace</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/common.html#trace"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.common.trace" title="Permalink to this definition">¶</a></dt>
+<dd><p>trace finds the line, the filename
+and error message and returns it
+to the user</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-hermes.paperwork">
+<span id="hermes-paperwork-module"></span><h2>hermes.paperwork module<a class="headerlink" href="#module-hermes.paperwork" title="Permalink to this headline">¶</a></h2>
+<p>This module contains the working class that does the filing, and managing
+of the metadata.  Much like Hermes Conrad, it loves to parse, change and
+file metadata back and forth between dictionaries and xml.  The results is
+an easy to use tool where users can script metadata changes without having
+to parse the XML in XML format.</p>
+<dl class="docutils">
+<dt>Requires <span class="classifier-delimiter">:</span> <span class="classifier">Python 2.7.x, Python 3.4</span></dt>
+<dd>ArcGIS 10.3.1/ArcGIS 10.4</dd>
+</dl>
+<p>Copyright 2015 Esri
+Licensed under the Apache License, Version 2.0 (the &#8216;License&#8217;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<blockquote>
+<div><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></div></blockquote>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &#8216;AS IS&#8217; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+<dl class="class">
+<dt id="hermes.paperwork.Paperwork">
+<em class="property">class </em><code class="descclassname">hermes.paperwork.</code><code class="descname">Paperwork</code><span class="sig-paren">(</span><em>dataset</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/paperwork.html#Paperwork"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.paperwork.Paperwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Allows users to easily create and modify the metadata from the feature
+class.  The data will be returned as a dictionary object for easy of
+use.  This means users can modify values and push them back into the
+metadata by referencing the key names.</p>
+<p>To use, just pass in the path of a feature class or table.  The dataset
+can be any support ArcGIS format that support metadata.</p>
+<p>Usage Reader Example:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fc</span> <span class="o">=</span><span class="s">r&quot;c:      emp\scratch.gdb\states&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pw</span> <span class="o">=</span> <span class="n">Paperwork</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">fc</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span> <span class="n">pw</span><span class="o">.</span><span class="n">convert</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Usage Update Example (add searchKeys to the metadata):</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">fc</span> <span class="o">=</span> <span class="s">r&quot;c:     emp\scratch.gdb\states&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pw</span> <span class="o">=</span> <span class="n">Paperwork</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">fc</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">val</span> <span class="o">=</span>  <span class="n">pw</span><span class="o">.</span><span class="n">convert</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">val</span><span class="p">[</span><span class="s">&#39;metadata&#39;</span><span class="p">][</span><span class="s">&#39;dataIdInfo&#39;</span><span class="p">][</span><span class="s">&#39;searchKeys&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">val</span><span class="p">[</span><span class="s">&#39;metadata&#39;</span><span class="p">][</span><span class="s">&#39;dataIdInfo&#39;</span><span class="p">][</span><span class="s">&#39;searchKeys&#39;</span><span class="p">][</span><span class="s">&#39;keywords&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;states&#39;</span><span class="p">,</span> <span class="s">&#39;USA&#39;</span><span class="p">]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">pw</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">d</span><span class="o">=</span><span class="n">val</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The dictionary results explained:</p>
+<p>All attributes begin with a &#8216;&#64;&#8217; and will be inside the element tag.
+All text values will be stated as: #text : &lt;value&gt;
+Example:</p>
+<blockquote>
+<div><p>&lt;someelement myValue=1&gt;i heart paperwork&lt;/someelement&gt;
+Results in:
+{&#8216;someelement&#8217;: { <a class="reference external" href="mailto:'&#37;&#52;&#48;myValue">'<span>&#64;</span>myValue</a>&#8216; : 1,</p>
+<blockquote>
+<div><blockquote>
+<div>&#8216;#text&#8217; : &#8216;i heart paperwork&#8217;</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>Example 2:</dt>
+<dd><dl class="first docutils">
+<dt>&lt;someelement myValue=1&gt;</dt>
+<dd>&lt;subelement tags=&#8221;fish&#8221;&gt;my value&lt;/subelement&gt;</dd>
+</dl>
+<p class="last">&lt;/someelement&gt;</p>
+</dd>
+<dt>Results in:</dt>
+<dd><dl class="first docutils">
+<dt>{&#8216;someelement&#8217;: { <a class="reference external" href="mailto:'&#37;&#52;&#48;myValue">'<span>&#64;</span>myValue</a>&#8216; <span class="classifier-delimiter">:</span> <span class="classifier">1,</span></dt>
+<dd><blockquote class="first">
+<div><dl class="docutils">
+<dt>&#8220;subelement&#8221; <span class="classifier-delimiter">:</span> <span class="classifier"><a class="reference external" href="mailto:{'&#37;&#52;&#48;tags">{'<span>&#64;</span>tags</a>&#8216;</span> <span class="classifier-delimiter">:</span> <span class="classifier">&#8220;fish&#8221;,</span></dt>
+<dd>&#8216;#text&#8217; : &#8216;my value&#8217;
+}</dd>
+</dl>
+</div></blockquote>
+<p class="last">}</p>
+</dd>
+</dl>
+<p class="last">}</p>
+</dd>
+</dl>
+<dl class="method">
+<dt id="hermes.paperwork.Paperwork.convert">
+<code class="descname">convert</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/paperwork.html#Paperwork.convert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.paperwork.Paperwork.convert" title="Permalink to this definition">¶</a></dt>
+<dd><p>converts an xml document to a dictionary</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="hermes.paperwork.Paperwork.dataset">
+<code class="descname">dataset</code><a class="headerlink" href="#hermes.paperwork.Paperwork.dataset" title="Permalink to this definition">¶</a></dt>
+<dd><p>get/sets the dataset metadata</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="hermes.paperwork.Paperwork.datasetProperties">
+<code class="descname">datasetProperties</code><a class="headerlink" href="#hermes.paperwork.Paperwork.datasetProperties" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns a collection of common dataset properties including
+information about the workspace.
+The return object is a dictionary {}</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hermes.paperwork.Paperwork.exportToXML">
+<code class="descname">exportToXML</code><span class="sig-paren">(</span><em>outFolder=None</em>, <em>outName=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/paperwork.html#Paperwork.exportToXML"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.paperwork.Paperwork.exportToXML" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exports a metadata file (.xml) to a save location and a given name.
+To get the save changes, call the save() before running the
+function.</p>
+<p>Example:
+&gt;&gt;&gt; fc = r&#8221;c:   empscratch.gdbstates&#8221;
+&gt;&gt;&gt; pw = Paperwork(dataset=fc)
+&gt;&gt;&gt; val =  pw.convert()
+&gt;&gt;&gt; val[&#8216;metadata&#8217;][&#8216;dataIdInfo&#8217;][&#8216;searchKeys&#8217;] = {}
+&gt;&gt;&gt; val[&#8216;metadata&#8217;][&#8216;dataIdInfo&#8217;][&#8216;searchKeys&#8217;][&#8216;keywords&#8217;] = [&#8216;states&#8217;, &#8216;USA&#8217;]
+&gt;&gt;&gt; pw.save(d=val)
+&gt;&gt;&gt; print pw.exportToXML(r&#8221;c:   empmymetadata&#8221;, &#8220;system_shell.xml&#8221;)</p>
+<dl class="docutils">
+<dt>Inputs:</dt>
+<dd><dl class="first last docutils">
+<dt>outFolder - optional - is the value provided is not given, then</dt>
+<dd>systems temp folder will be used.</dd>
+<dt>outName - optional - is the name of the xml file.  This can be</dt>
+<dd>provided, or created by the system.  The file create will be
+randomly generated.</dd>
+</dl>
+</dd>
+<dt>Output:</dt>
+<dd>path to xml file</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="hermes.paperwork.Paperwork.importXMLFile">
+<code class="descname">importXMLFile</code><span class="sig-paren">(</span><em>xmlFile</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/paperwork.html#Paperwork.importXMLFile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.paperwork.Paperwork.importXMLFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>imports an xml metadata file to the target dataset.
+Input:</p>
+<blockquote>
+<div>xmlFile - the xml file to import to the dataset.</div></blockquote>
+<dl class="docutils">
+<dt>Output:</dt>
+<dd>outputs the dictionary of the newly imported file. It returns
+None if the xml file is not valid or does not exist.</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="hermes.paperwork.Paperwork.json">
+<code class="descname">json</code><a class="headerlink" href="#hermes.paperwork.Paperwork.json" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the object as json from the xml document</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hermes.paperwork.Paperwork.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>d=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/paperwork.html#Paperwork.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.paperwork.Paperwork.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>commits the xml changes from the dictionary to the dataset
+If d is set to None, then dictionary from convert() will be
+used.</p>
+<dl class="docutils">
+<dt>Inputs:</dt>
+<dd><dl class="first last docutils">
+<dt>d - optional - either None or dictionary to be converted to</dt>
+<dd>metdata xml and applied to the dataset.</dd>
+</dl>
+</dd>
+<dt>Raises:</dt>
+<dd>HermesErrorHandler</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="hermes.paperwork.Paperwork.save_location">
+<code class="descname">save_location</code><a class="headerlink" href="#hermes.paperwork.Paperwork.save_location" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the location where the xml file is saved</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="hermes.paperwork.Paperwork.setSyncMethod">
+<code class="descname">setSyncMethod</code><span class="sig-paren">(</span><em>method='ALWAYS'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/hermes/paperwork.html#Paperwork.setSyncMethod"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#hermes.paperwork.Paperwork.setSyncMethod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Automatically updates an ArcGIS item&#8217;s metadata with the current
+properties of the item.
+For example, if the metadata describes the item as having one
+projection but the item&#8217;s projection has changed since the last
+automatic update, the old projection information in the metadata
+will be replaced with the new projection information.</p>
+<p>By default, metadata is automatically updated when anyone who has
+write access to the ArcGIS item views its metadata. Metadata can
+also be synchronized by running this tool. The option to turn off
+synchronization when you view metadata doesn&#8217;t affect how this tool
+operates.</p>
+<dl class="docutils">
+<dt>Inputs:</dt>
+<dd><dl class="first last docutils">
+<dt>method - The type of synchronization that will take place.</dt>
+<dd><dl class="first last docutils">
+<dt>ALWAYS -Properties of the source item are always added to or</dt>
+<dd>updated in its metadata. Metadata will be created if it
+doesn&#8217;t already exist. This is the deault.</dd>
+<dt>ACCESSED -Properties of the source item are added to or updated</dt>
+<dd>in its metadata when it is accessed. Metadata will be created
+if it doesn&#8217;t already exist.</dd>
+<dt>CREATED -Metadata will be created and properties of the source</dt>
+<dd>item will be added to it if the item doesn&#8217;t already have
+metadata.</dd>
+<dt>NOT_CREATED -Properties of the source item are added to or</dt>
+<dd>updated in existing metadata.</dd>
+<dt>OVERWRITE -The same as &#8220;ALWAYS&#8221; except all information that can</dt>
+<dd>be recorded automatically in the metadata will be recorded.
+Any properties typed in by a person will be replaced with the
+item&#8217;s actual properties.</dd>
+<dt>SELECTIVE -The same as &#8220;OVERWRITE&#8221; except the title and the</dt>
+<dd>content type will not be overwritten with default values for
+the item. Used when metadata is upgraded to the ArcGIS 10.x
+metadata format.</dd>
+</dl>
+</dd>
+<dt>Ouput:</dt>
+<dd>dataset path</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="hermes.paperwork.Paperwork.xmlfile">
+<code class="descname">xmlfile</code><a class="headerlink" href="#hermes.paperwork.Paperwork.xmlfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>gets the temporary xml file path</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-hermes.version">
+<span id="hermes-version-module"></span><h2>hermes.version module<a class="headerlink" href="#module-hermes.version" title="Permalink to this headline">¶</a></h2>
+<p>Copyright 2015 Esri
+Licensed under the Apache License, Version 2.0 (the &#8216;License&#8217;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<blockquote>
+<div><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></div></blockquote>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &#8216;AS IS&#8217; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+<div class="section" id="module-hermes">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-hermes" title="Permalink to this headline">¶</a></h2>
+<p>Copyright 2015 Esri
+Licensed under the Apache License, Version 2.0 (the &#8216;License&#8217;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<blockquote>
+<div><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></div></blockquote>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &#8216;AS IS&#8217; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">hermes package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-hermes.common">hermes.common module</a></li>
+<li><a class="reference internal" href="#module-hermes.paperwork">hermes.paperwork module</a></li>
+<li><a class="reference internal" href="#module-hermes.version">hermes.version module</a></li>
+<li><a class="reference internal" href="#module-hermes">Module contents</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Welcome to hermes&#8217;s documentation!</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/hermes.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Author.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+      |
+      <a href="_sources/hermes.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

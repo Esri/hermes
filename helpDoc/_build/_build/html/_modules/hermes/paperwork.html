@@ -1,0 +1,574 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>hermes.paperwork &mdash; src  documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="src  documentation" href="../../index.html" />
+    <link rel="up" title="Module code" href="../index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for hermes.paperwork</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module contains the working class that does the filing, and managing</span>
+<span class="sd">of the metadata.  Much like Hermes Conrad, it loves to parse, change and</span>
+<span class="sd">file metadata back and forth between dictionaries and xml.  The results is</span>
+<span class="sd">an easy to use tool where users can script metadata changes without having</span>
+<span class="sd">to parse the XML in XML format.</span>
+
+<span class="sd">Requires : Python 2.7.x, Python 3.4</span>
+<span class="sd">           ArcGIS 10.3.1/ArcGIS 10.4</span>
+
+
+<span class="sd">Copyright 2015 Esri</span>
+<span class="sd">Licensed under the Apache License, Version 2.0 (the &#39;License&#39;);</span>
+<span class="sd">you may not use this file except in compliance with the License.</span>
+<span class="sd">You may obtain a copy of the License at</span>
+<span class="sd">    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="sd">Unless required by applicable law or agreed to in writing, software</span>
+<span class="sd">distributed under the License is distributed on an &#39;AS IS&#39; BASIS,</span>
+<span class="sd">WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="sd">See the License for the specific language governing permissions and</span>
+<span class="sd">limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">arcpy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">xml.etree.cElementTree</span> <span class="kn">as</span> <span class="nn">ET</span>
+<span class="kn">from</span> <span class="nn">.common</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="n">__version__</span> <span class="o">=</span> <span class="s">&quot;1.1.0&quot;</span>
+<span class="c">########################################################################</span>
+<div class="viewcode-block" id="Paperwork"><a class="viewcode-back" href="../../hermes.html#hermes.paperwork.Paperwork">[docs]</a><span class="k">class</span> <span class="nc">Paperwork</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Allows users to easily create and modify the metadata from the feature</span>
+<span class="sd">    class.  The data will be returned as a dictionary object for easy of</span>
+<span class="sd">    use.  This means users can modify values and push them back into the</span>
+<span class="sd">    metadata by referencing the key names.</span>
+
+<span class="sd">    To use, just pass in the path of a feature class or table.  The dataset</span>
+<span class="sd">    can be any support ArcGIS format that support metadata.</span>
+
+<span class="sd">    Usage Reader Example:</span>
+
+<span class="sd">      &gt;&gt;&gt; fc =r&quot;c:\temp\scratch.gdb\states&quot;</span>
+<span class="sd">      &gt;&gt;&gt; pw = Paperwork(dataset=fc)</span>
+<span class="sd">      &gt;&gt;&gt; print pw.convert()</span>
+
+<span class="sd">    Usage Update Example (add searchKeys to the metadata):</span>
+
+<span class="sd">      &gt;&gt;&gt; fc = r&quot;c:\temp\scratch.gdb\states&quot;</span>
+<span class="sd">      &gt;&gt;&gt; pw = Paperwork(dataset=fc)</span>
+<span class="sd">      &gt;&gt;&gt; val =  pw.convert()</span>
+<span class="sd">      &gt;&gt;&gt; val[&#39;metadata&#39;][&#39;dataIdInfo&#39;][&#39;searchKeys&#39;] = {}</span>
+<span class="sd">      &gt;&gt;&gt; val[&#39;metadata&#39;][&#39;dataIdInfo&#39;][&#39;searchKeys&#39;][&#39;keywords&#39;] = [&#39;states&#39;, &#39;USA&#39;]</span>
+<span class="sd">      &gt;&gt;&gt; pw.save(d=val)</span>
+
+<span class="sd">    The dictionary results explained:</span>
+
+<span class="sd">    All attributes begin with a &#39;@&#39; and will be inside the element tag.</span>
+<span class="sd">    All text values will be stated as: #text : &lt;value&gt;</span>
+<span class="sd">    Example:</span>
+<span class="sd">       &lt;someelement myValue=1&gt;i heart paperwork&lt;/someelement&gt;</span>
+<span class="sd">       Results in:</span>
+<span class="sd">       {&#39;someelement&#39;: { &#39;@myValue&#39; : 1,</span>
+<span class="sd">                         &#39;#text&#39; : &#39;i heart paperwork&#39;</span>
+<span class="sd">                       }</span>
+<span class="sd">       }</span>
+<span class="sd">    Example 2:</span>
+<span class="sd">       &lt;someelement myValue=1&gt;</span>
+<span class="sd">         &lt;subelement tags=&quot;fish&quot;&gt;my value&lt;/subelement&gt;</span>
+<span class="sd">       &lt;/someelement&gt;</span>
+<span class="sd">    Results in:</span>
+<span class="sd">       {&#39;someelement&#39;: { &#39;@myValue&#39; : 1,</span>
+<span class="sd">                         &quot;subelement&quot; : {&#39;@tags&#39; : &quot;fish&quot;,</span>
+<span class="sd">                                         &#39;#text&#39; : &#39;my value&#39;</span>
+<span class="sd">                                         }</span>
+<span class="sd">                       }</span>
+<span class="sd">       }</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_dataset</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_xmlText</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_temp_xml_file</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">_temp_workspace</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Constructor&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="k">def</span> <span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;creates a blank metadata file&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fd</span><span class="p">,</span> <span class="n">filepath</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkstemp</span><span class="p">(</span><span class="s">&quot;.xml&quot;</span><span class="p">,</span>
+                                            <span class="nb">dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">save_location</span><span class="p">,</span>
+                                            <span class="n">text</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span> <span class="o">=</span> <span class="n">filepath</span>
+            <span class="k">with</span> <span class="n">os</span><span class="o">.</span><span class="n">fdopen</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="s">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s">&quot;&lt;metadata /&gt;&quot;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">del</span> <span class="n">fd</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">MetadataImporter_conversion</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span><span class="p">,</span> <span class="n">filepath</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;_setup&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                    <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                    <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                    <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">GetMessages</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get/sets the dataset metadata&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="nd">@dataset.setter</span>
+    <span class="k">def</span> <span class="nf">dataset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;get/sets the dataset metadata&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Exists</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_temp_workspace</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_xmlText</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">synerror</span> <span class="o">=</span> <span class="s">&quot;dataset does not exist or cannot be accessed.&quot;</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;dataset&quot;</span><span class="p">,</span>
+                        <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="mi">137</span><span class="p">,</span>
+                        <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="s">&quot;paperwork.py&quot;</span><span class="p">,</span>
+                        <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                        <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="n">synerror</span>
+                <span class="p">}</span>
+            <span class="p">)</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">xmlfile</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;gets the temporary xml file path&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;xmlfile&quot;</span><span class="p">,</span>
+                        <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                        <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                        <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                        <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">GetMessages</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">save_location</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns the location where the xml file is saved&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_temp_workspace</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_temp_workspace</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_temp_workspace</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;save_location&quot;</span><span class="p">,</span>
+                        <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                        <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                        <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                        <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">GetMessages</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns the xml text of a metadata file&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;returns the object as json from the xml document&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">convert</span><span class="p">())</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="k">def</span> <span class="nf">_metadata_to_dictionary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; converts the xml to a dictionary object (recursivly)&quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span> <span class="p">{}</span> <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">attrib</span> <span class="k">else</span> <span class="bp">None</span><span class="p">}</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">children</span><span class="p">:</span>
+            <span class="n">dd</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">dc</span> <span class="ow">in</span> <span class="nb">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata_to_dictionary</span><span class="p">,</span> <span class="n">children</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dc</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="n">dd</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">t</span><span class="o">.</span><span class="n">tag</span><span class="p">:</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">dd</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()}}</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">attrib</span><span class="p">:</span>
+            <span class="n">d</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">((</span><span class="s">&#39;@&#39;</span> <span class="o">+</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">t</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">iteritems</span><span class="p">())</span>
+        <span class="k">if</span> <span class="n">t</span><span class="o">.</span><span class="n">text</span><span class="p">:</span>
+            <span class="n">text</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+            <span class="k">if</span> <span class="n">children</span> <span class="ow">or</span> <span class="n">t</span><span class="o">.</span><span class="n">attrib</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">text</span><span class="p">:</span>
+                    <span class="n">d</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">tag</span><span class="p">][</span><span class="s">&#39;#text&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">text</span>
+        <span class="k">return</span> <span class="n">d</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="k">def</span> <span class="nf">_dictionary_to_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; converts a dictionary to xml&quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">_to_etree</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">d</span><span class="p">:</span>
+                <span class="k">pass</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">):</span>
+                <span class="n">root</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">d</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;#&#39;</span><span class="p">):</span>
+                        <span class="k">assert</span> <span class="n">k</span> <span class="o">==</span> <span class="s">&#39;#text&#39;</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">)</span>
+                        <span class="n">root</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="n">v</span>
+                    <span class="k">elif</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;@&#39;</span><span class="p">):</span>
+                        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">basestring</span><span class="p">)</span>
+                        <span class="n">root</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">k</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">v</span><span class="p">)</span>
+                    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                        <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+                            <span class="n">_to_etree</span><span class="p">(</span><span class="n">e</span><span class="p">,</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">_to_etree</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">ET</span><span class="o">.</span><span class="n">SubElement</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span> <span class="k">assert</span> <span class="n">d</span> <span class="o">==</span> <span class="s">&#39;invalid type&#39;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">tag</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()))</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">Element</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+        <span class="n">_to_etree</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ET</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="c">#----------------------------------------------------------------------</span>
+<div class="viewcode-block" id="Paperwork.convert"><a class="viewcode-back" href="../../hermes.html#hermes.paperwork.Paperwork.convert">[docs]</a>    <span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; converts an xml document to a dictionary &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">XML</span><span class="p">(</span><span class="n">text</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span><span class="p">,</span> <span class="s">&#39;rb&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata_to_dictionary</span><span class="p">(</span><span class="n">tree</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;convert&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                    <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                    <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                    <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">GetMessages</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+                <span class="p">}</span>
+            <span class="p">)</span></div>
+    <span class="c">#----------------------------------------------------------------------</span>
+<div class="viewcode-block" id="Paperwork.save"><a class="viewcode-back" href="../../hermes.html#hermes.paperwork.Paperwork.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">           commits the xml changes from the dictionary to the dataset</span>
+<span class="sd">           If d is set to None, then dictionary from convert() will be</span>
+<span class="sd">           used.</span>
+
+<span class="sd">           Inputs:</span>
+<span class="sd">              d - optional - either None or dictionary to be converted to</span>
+<span class="sd">                metdata xml and applied to the dataset.</span>
+<span class="sd">           Raises:</span>
+<span class="sd">              HermesErrorHandler</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dictionary_to_metadata</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+                <span class="n">writer</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xmlfile</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">writer</span><span class="p">:</span>
+                    <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+                    <span class="n">writer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                    <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="k">del</span> <span class="n">writer</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">MetadataImporter_conversion</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span><span class="p">):</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_temp_xml_file</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_temp_workspace</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_xmlText</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="k">return</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Input must be of type dictionary&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">False</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;save&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                    <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                    <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                    <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="n">synerror</span>
+                <span class="p">}</span>
+            <span class="p">)</span></div>
+    <span class="c">#----------------------------------------------------------------------</span>
+<div class="viewcode-block" id="Paperwork.exportToXML"><a class="viewcode-back" href="../../hermes.html#hermes.paperwork.Paperwork.exportToXML">[docs]</a>    <span class="k">def</span> <span class="nf">exportToXML</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">outFolder</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">outName</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Exports a metadata file (.xml) to a save location and a given name.</span>
+<span class="sd">        To get the save changes, call the save() before running the</span>
+<span class="sd">        function.</span>
+
+<span class="sd">        Example:</span>
+<span class="sd">        &gt;&gt;&gt; fc = r&quot;c:\temp\scratch.gdb\states&quot;</span>
+<span class="sd">        &gt;&gt;&gt; pw = Paperwork(dataset=fc)</span>
+<span class="sd">        &gt;&gt;&gt; val =  pw.convert()</span>
+<span class="sd">        &gt;&gt;&gt; val[&#39;metadata&#39;][&#39;dataIdInfo&#39;][&#39;searchKeys&#39;] = {}</span>
+<span class="sd">        &gt;&gt;&gt; val[&#39;metadata&#39;][&#39;dataIdInfo&#39;][&#39;searchKeys&#39;][&#39;keywords&#39;] = [&#39;states&#39;, &#39;USA&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; pw.save(d=val)</span>
+<span class="sd">        &gt;&gt;&gt; print pw.exportToXML(r&quot;c:\temp\mymetadata&quot;, &quot;system_shell.xml&quot;)</span>
+
+<span class="sd">        Inputs:</span>
+<span class="sd">          outFolder - optional - is the value provided is not given, then</span>
+<span class="sd">           systems temp folder will be used.</span>
+<span class="sd">          outName - optional - is the name of the xml file.  This can be</span>
+<span class="sd">           provided, or created by the system.  The file create will be</span>
+<span class="sd">           randomly generated.</span>
+<span class="sd">        Output:</span>
+<span class="sd">           path to xml file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">outFolder</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">outFolder</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">outFolder</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">outFolder</span><span class="p">)</span> <span class="o">==</span> <span class="bp">False</span><span class="p">:</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">outFolder</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">outFolder</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">gettempdir</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">outName</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">outName</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&#39;.xml&#39;</span><span class="p">):</span>
+                    <span class="n">fullPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outFolder</span><span class="p">,</span> <span class="n">outName</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">fullPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outFolder</span><span class="p">,</span> <span class="n">outName</span> <span class="o">+</span> <span class="s">&quot;.xml&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="kn">from</span> <span class="nn">uuid</span> <span class="kn">import</span> <span class="n">uuid4</span>
+                <span class="n">fullPath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">outFolder</span><span class="p">,</span> <span class="n">uuid4</span><span class="p">()</span><span class="o">.</span><span class="n">get_hex</span><span class="p">()</span> <span class="o">+</span> <span class="s">&quot;.xml&quot;</span><span class="p">)</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert</span><span class="p">()</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dictionary_to_metadata</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">writer</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fullPath</span><span class="p">,</span> <span class="s">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">writer</span><span class="p">:</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="n">writer</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">del</span> <span class="n">writer</span>
+            <span class="k">return</span> <span class="n">fullPath</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;exportToXML&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                    <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                    <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                    <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="n">synerror</span>
+                <span class="p">}</span>
+            <span class="p">)</span></div>
+    <span class="c">#----------------------------------------------------------------------</span>
+<div class="viewcode-block" id="Paperwork.importXMLFile"><a class="viewcode-back" href="../../hermes.html#hermes.paperwork.Paperwork.importXMLFile">[docs]</a>    <span class="k">def</span> <span class="nf">importXMLFile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xmlFile</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        imports an xml metadata file to the target dataset.</span>
+<span class="sd">        Input:</span>
+<span class="sd">           xmlFile - the xml file to import to the dataset.</span>
+<span class="sd">        Output:</span>
+<span class="sd">           outputs the dictionary of the newly imported file. It returns</span>
+<span class="sd">           None if the xml file is not valid or does not exist.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">xmlFile</span><span class="p">)</span> <span class="ow">and</span> \
+           <span class="n">xmlFile</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s">&quot;.xml&quot;</span><span class="p">):</span>
+            <span class="n">arcpy</span><span class="o">.</span><span class="n">MetadataImporter_conversion</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="n">xmlFile</span><span class="p">,</span>
+                                              <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup</span><span class="p">()</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">convert</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">None</span></div>
+    <span class="c">#----------------------------------------------------------------------</span>
+<div class="viewcode-block" id="Paperwork.setSyncMethod"><a class="viewcode-back" href="../../hermes.html#hermes.paperwork.Paperwork.setSyncMethod">[docs]</a>    <span class="k">def</span> <span class="nf">setSyncMethod</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s">&quot;ALWAYS&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Automatically updates an ArcGIS item&#39;s metadata with the current</span>
+<span class="sd">        properties of the item.</span>
+<span class="sd">        For example, if the metadata describes the item as having one</span>
+<span class="sd">        projection but the item&#39;s projection has changed since the last</span>
+<span class="sd">        automatic update, the old projection information in the metadata</span>
+<span class="sd">        will be replaced with the new projection information.</span>
+
+<span class="sd">        By default, metadata is automatically updated when anyone who has</span>
+<span class="sd">        write access to the ArcGIS item views its metadata. Metadata can</span>
+<span class="sd">        also be synchronized by running this tool. The option to turn off</span>
+<span class="sd">        synchronization when you view metadata doesn&#39;t affect how this tool</span>
+<span class="sd">        operates.</span>
+
+<span class="sd">        Inputs:</span>
+<span class="sd">           method - The type of synchronization that will take place.</span>
+<span class="sd">            ALWAYS -Properties of the source item are always added to or</span>
+<span class="sd">             updated in its metadata. Metadata will be created if it</span>
+<span class="sd">             doesn&#39;t already exist. This is the deault.</span>
+<span class="sd">            ACCESSED -Properties of the source item are added to or updated</span>
+<span class="sd">             in its metadata when it is accessed. Metadata will be created</span>
+<span class="sd">             if it doesn&#39;t already exist.</span>
+<span class="sd">            CREATED -Metadata will be created and properties of the source</span>
+<span class="sd">             item will be added to it if the item doesn&#39;t already have</span>
+<span class="sd">             metadata.</span>
+<span class="sd">            NOT_CREATED -Properties of the source item are added to or</span>
+<span class="sd">             updated in existing metadata.</span>
+<span class="sd">            OVERWRITE -The same as &quot;ALWAYS&quot; except all information that can</span>
+<span class="sd">             be recorded automatically in the metadata will be recorded.</span>
+<span class="sd">             Any properties typed in by a person will be replaced with the</span>
+<span class="sd">             item&#39;s actual properties.</span>
+<span class="sd">            SELECTIVE -The same as &quot;OVERWRITE&quot; except the title and the</span>
+<span class="sd">             content type will not be overwritten with default values for</span>
+<span class="sd">             the item. Used when metadata is upgraded to the ArcGIS 10.x</span>
+<span class="sd">             metadata format.</span>
+<span class="sd">           Ouput:</span>
+<span class="sd">             dataset path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">methods</span> <span class="o">=</span> <span class="p">[</span><span class="s">&quot;ALWAYS&quot;</span><span class="p">,</span> <span class="s">&quot;CREATED&quot;</span><span class="p">,</span> <span class="s">&quot;NOT_CREATED&quot;</span><span class="p">,</span>
+                       <span class="s">&quot;OVERWRITE&quot;</span><span class="p">,</span> <span class="s">&quot;SELECTIVE&quot;</span><span class="p">,</span> <span class="s">&quot;ACCESSED&quot;</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">method</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="ow">in</span> <span class="n">methods</span><span class="p">:</span>
+                <span class="n">arcpy</span><span class="o">.</span><span class="n">SynchronizeMetadata_conversion</span><span class="p">(</span><span class="n">source</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span><span class="p">,</span>
+                                                     <span class="n">synctype</span><span class="o">=</span><span class="n">method</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s">&quot;Invalid method type: </span><span class="si">%s</span><span class="s">&quot;</span> <span class="o">%</span> <span class="n">method</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;setSyncMethod&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                    <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                    <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                    <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">GetMessages</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+                <span class="p">}</span>
+            <span class="p">)</span></div>
+
+    <span class="c">#----------------------------------------------------------------------</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">datasetProperties</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        returns a collection of common dataset properties including</span>
+<span class="sd">        information about the workspace.</span>
+<span class="sd">        The return object is a dictionary {}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">validationWorkspace</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span><span class="p">)</span>
+            <span class="n">desc</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span><span class="p">)</span>
+            <span class="n">descWrksp</span> <span class="o">=</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">Describe</span><span class="p">(</span><span class="n">desc</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+            <span class="n">database</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">tableName</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s">&quot;(null)&quot;</span> <span class="k">else</span> <span class="s">&quot;&quot;</span> \
+                                          <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">arcpy</span><span class="o">.</span><span class="n">ParseTableName</span><span class="p">(</span><span class="n">desc</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                                                                        <span class="n">validationWorkspace</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&quot;,&quot;</span><span class="p">)]</span>
+            <span class="n">datasetType</span> <span class="o">=</span> <span class="n">desc</span><span class="o">.</span><span class="n">datasetType</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">desc</span><span class="p">,</span> <span class="s">&quot;datasetType&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+            <span class="n">workspaceFactoryProgID</span> <span class="o">=</span> <span class="n">descWrksp</span><span class="o">.</span><span class="n">workspaceFactoryProgID</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">descWrksp</span><span class="p">,</span> <span class="s">&quot;workspaceFactoryProgID&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+            <span class="n">workspaceType</span> <span class="o">=</span> <span class="n">descWrksp</span><span class="o">.</span><span class="n">workspaceType</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">descWrksp</span><span class="p">,</span> <span class="s">&quot;workspaceType&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+            <span class="n">connectionString</span> <span class="o">=</span> <span class="n">descWrksp</span><span class="o">.</span><span class="n">connectionString</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">descWrksp</span><span class="p">,</span> <span class="s">&quot;connectionString&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+            <span class="n">alias</span> <span class="o">=</span> <span class="n">desc</span><span class="o">.</span><span class="n">aliasName</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">desc</span><span class="p">,</span> <span class="s">&quot;aliasName&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+            <span class="n">dataType</span> <span class="o">=</span> <span class="n">descWrksp</span><span class="o">.</span><span class="n">dataType</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">descWrksp</span><span class="p">,</span> <span class="s">&quot;dataType&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="s">&quot;&quot;</span>
+            <span class="k">return</span> <span class="p">{</span>
+                <span class="s">&quot;owner&quot;</span> <span class="p">:</span> <span class="n">owner</span><span class="p">,</span>
+                <span class="s">&quot;tableName&quot;</span> <span class="p">:</span> <span class="n">tableName</span><span class="p">,</span>
+                <span class="s">&quot;alias&quot;</span> <span class="p">:</span> <span class="n">alias</span><span class="p">,</span>
+                <span class="s">&quot;database&quot;</span> <span class="p">:</span> <span class="n">database</span><span class="p">,</span>
+                <span class="s">&quot;dataType&quot;</span> <span class="p">:</span> <span class="n">dataType</span><span class="p">,</span>
+                <span class="s">&quot;datasetType&quot;</span> <span class="p">:</span> <span class="n">datasetType</span><span class="p">,</span>
+                <span class="s">&quot;workspace&quot;</span> <span class="p">:</span> <span class="p">{</span>
+                    <span class="s">&quot;type&quot;</span> <span class="p">:</span> <span class="n">descWrksp</span><span class="o">.</span><span class="n">dataType</span><span class="p">,</span>
+                    <span class="s">&quot;path&quot;</span> <span class="p">:</span> <span class="n">desc</span><span class="o">.</span><span class="n">path</span><span class="p">,</span>
+                    <span class="s">&quot;connectionString&quot;</span> <span class="p">:</span> <span class="n">connectionString</span><span class="p">,</span>
+                    <span class="s">&quot;workspaceType&quot;</span> <span class="p">:</span> <span class="n">workspaceType</span><span class="p">,</span>
+                    <span class="s">&quot;workspaceFactoryProgID&quot;</span> <span class="p">:</span> <span class="n">workspaceFactoryProgID</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="n">line</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">synerror</span> <span class="o">=</span> <span class="n">trace</span><span class="p">()</span>
+            <span class="k">raise</span> <span class="n">HermesErrorHandler</span><span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="s">&quot;function&quot;</span><span class="p">:</span> <span class="s">&quot;datasetProperties&quot;</span><span class="p">,</span>
+                    <span class="s">&quot;line&quot;</span><span class="p">:</span> <span class="n">line</span><span class="p">,</span>
+                    <span class="s">&quot;filename&quot;</span><span class="p">:</span> <span class="n">filename</span><span class="p">,</span>
+                    <span class="s">&quot;synerror&quot;</span><span class="p">:</span> <span class="n">synerror</span><span class="p">,</span>
+                    <span class="s">&quot;arc&quot;</span> <span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">arcpy</span><span class="o">.</span><span class="n">GetMessages</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+                <span class="p">}</span>
+            <span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Author.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.6</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>
