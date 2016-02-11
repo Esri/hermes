@@ -16,7 +16,7 @@ from __future__ import print_function
 import traceback
 import sys
 import os
-__version__ = "1.1.0"
+from .version import __version__
 
 def trace():
     """

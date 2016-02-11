@@ -29,7 +29,7 @@ import tempfile
 import xml.etree.cElementTree as ET
 from .common import *
 from collections import defaultdict
-__version__ = "1.1.0"
+from .version import __version__
 ########################################################################
 class Paperwork(object):
     """
