@@ -16,7 +16,7 @@ It also was developed to help people deal with metadata in the Python environmen
 
 #  Requirements
  - ArcGIS Desktop 10.3.x+
- - Python 2.7.x
+ - Python 2.7.x (32-bit)
 
 To use, just pass in the path of a feature class or table.  The dataset
 can be any support ArcGIS format that support metadata.
